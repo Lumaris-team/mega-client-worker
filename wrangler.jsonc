@@ -1,16 +1,17 @@
 {
-  // Principal informations
-  "name": "worker_name",
+  // mega-client-worker — internal MEGA storage API.
+  // No public URL: only reachable through service bindings from other
+  // workers of the same account (env.MEGA_CLIENT.fetch(...)).
+  "name": "mega-client-worker",
   "main": "src/index.js",
   "compatibility_date": "2026-07-19",
-  "workers_dev": true,
+  "workers_dev": false,
   "compatibility_flags": ["nodejs_compat"],
 
-  // Static site
-  "assets": {
-    "directory": "./src/frontend",
-    "binding": "ASSETS"
-  },
+  // MEGA credentials are NOT declared here: set MEGA_EMAIL and
+  // MEGA_PASSWORD directly on this worker (wrangler secret put, dashboard,
+  // or a secrets_store_secrets binding injected by update-client-account).
+  // Both plain secrets/vars and Secrets Store bindings are supported.
 
   // Observability
   "observability": {

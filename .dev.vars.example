@@ -1,0 +1,7 @@
+# MEGA credentials — copy to .dev.vars for local development.
+# In production set them as secrets on the worker:
+#   wrangler secret put MEGA_EMAIL
+#   wrangler secret put MEGA_PASSWORD
+# or inject secrets_store_secrets bindings via update-client-account.
+MEGA_EMAIL=your-mega-email@example.com
+MEGA_PASSWORD=your-mega-password

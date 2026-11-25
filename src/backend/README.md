@@ -1,9 +1,14 @@
 # Backend Structure
 
-Each folder in this directory corresponds to a specific feature. The functions defined in these folders will be used by the main `index.js` file to handle different functionalities.
+`mega/` — the whole MEGA integration. This worker owns the MEGA session
+(megajs `Storage` login, 24h connection cache, rate limiting, retries) so
+caller workers never touch MEGA credentials or the megajs client.
 
-## Organization
-
-- Create a new folder for each feature
-- Place your feature-specific functions and logic inside the corresponding folder
-- Import and use these functions in the main `index.js` file
+- `mega.js` — client factory + low-level ops (`getClient`, folder
+  navigation, `megaRead`/`megaWrite`/`megaDelete` for small state files,
+  `megaGetLink` for public download URLs).
+- `files.js` — user files API: list, read (download URL), upload
+  (buffer / remote URL streaming), folder, rename, delete.
+- `state.js` — small internal JSON/text state files (`lumaris/pomodoro/…`,
+  `lumaris/websites/…`).
+- `stats.js` — storage usage per `lumaris/` folder.
