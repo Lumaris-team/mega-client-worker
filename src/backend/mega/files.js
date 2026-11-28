@@ -170,7 +170,28 @@ async function uploadFromURL(env, relativePath, url, storage = null) {
     throw new Error(`Failed to download from URL: ${response.status}`);
   }
 
-  const fileSize = parseInt(response.headers.get('content-length')) || 0;
+  let fileSize = parseInt(response.headers.get('content-length')) || 0;
+
+  // Chunked responses carry no content-length — MEGA needs the exact size
+  // upfront, so buffer the body instead (bounded to stay within Worker memory).
+  if (!fileSize) {
+    const MAX_BUFFERED = 64 * 1024 * 1024;
+    const chunks = [];
+    let total = 0;
+    const reader0 = response.body.getReader();
+    while (true) {
+      const { done, value } = await reader0.read();
+      if (done) break;
+      total += value.length;
+      if (total > MAX_BUFFERED) throw new Error("Remote file too large to import without a known size");
+      chunks.push(value);
+    }
+    const merged = new Uint8Array(total);
+    let off = 0;
+    for (const c of chunks) { merged.set(c, off); off += c.length; }
+    return await uploadFromBuffer(env, relativePath, Buffer.from(merged), storage);
+  }
+
   const fileSizeMB = fileSize / 1024 / 1024;
 
   const { uploadStream, initialChunkSize, timeoutMs } = makeUploadStream(folder, fileName, fileSize, fileSizeMB);

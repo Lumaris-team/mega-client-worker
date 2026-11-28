@@ -25,16 +25,31 @@ async function getFolderSize(storage, folderPath) {
 
 // Storage usage stats — ?path= selects the folder under lumaris/
 // (default: files/). Returns bytes per top-level item plus a total.
+// The percentage is computed against the REAL account quota
+// (getAccountInfo → mstrg), not a hardcoded capacity.
 export async function StatsFunction(env, url) {
   const requested = url.searchParams.get("path") || FILES_ROOT;
 
   try {
     const storage = await getClient(env);
+
+    // Real account quota — MEGA returns it on every login, no extra cost.
+    let capacityGB = 20;
+    let accountBytes = 0;
+    try {
+      const info = await storage.getAccountInfo();
+      if (info?.spaceTotal > 0) capacityGB = info.spaceTotal / 1024 / 1024 / 1024;
+      accountBytes = info?.spaceUsed || 0;
+    } catch (e) {
+      console.warn("getAccountInfo failed, falling back to 20GB:", e?.message);
+    }
+
     const bytes = await getFolderSize(storage, requested);
 
     return {
-      totalBytes: bytes,
-      capacityGB: 20,
+      totalBytes: accountBytes || bytes,
+      folderBytes: bytes,
+      capacityGB,
       items: [
         { key: `${requested}/`, label: `lumaris/${requested}/`, bytes },
       ]
